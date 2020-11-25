@@ -323,6 +323,7 @@ static void set_hostname(const char *name)
 	struct hostent *ent;
 
 	if (strlen(name) + 1 > NFS_MAXPATHLEN) {
+		logmsg(LOG_CRIT, "hostname '%s' is too long", name);
 		e_error = TRUE;
 		return;
 	}
@@ -348,8 +349,10 @@ static void set_ipaddr(const char *addr)
 {
 	strcpy(cur_host.orig, addr);
 	
-	if (!inet_aton(addr, &cur_host.addr))
+	if (!inet_aton(addr, &cur_host.addr)) {
+		logmsg(LOG_CRIT, "could not parse address '%s'", addr);
 		e_error = TRUE;
+	}
 	cur_host.mask.s_addr = 0;
 	cur_host.mask.s_addr = ~cur_host.mask.s_addr;
 }
@@ -384,8 +387,10 @@ static void set_ipnet(char *addr, int new)
 	if (new)
 		cur_host.mask.s_addr = make_netmask(atoi(net));
 	else
-		if (!inet_aton(net, &cur_host.mask))
+		if (!inet_aton(net, &cur_host.mask)) {
+			logmsg(LOG_CRIT, "could not parse network mask '%s'", net);
 			e_error = TRUE;
+		}
 
 	*pos = '/';
 	strcpy(cur_host.orig, addr);
@@ -447,6 +452,8 @@ static void add_option_with_value(const char *opt, const char *val)
  */
 void yyerror(U(char *s))
 {
+	logmsg(LOG_CRIT, "parser error: %s", s);
+
 	e_error = TRUE;
 	return;
 }
